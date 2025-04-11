@@ -10,6 +10,7 @@ repositories {
 }
 
 dependencies {
+    implementation(kotlin("reflect"))
     implementation("com.zaxxer:HikariCP:6.3.0")
     runtimeOnly("org.postgresql:postgresql:42.7.5")
     testImplementation(kotlin("test"))
