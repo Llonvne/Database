@@ -6,6 +6,7 @@ import cn.llonvne.db.clause.TableClause
 import cn.llonvne.db.clause.VarCharColumnClause
 import cn.llonvne.db.database.DatabaseSpecification
 import cn.llonvne.db.foreignkey.ForeignKeyClause
+import cn.llonvne.db.foreignkey.ForeignKeyContext
 import cn.llonvne.db.foreignkey.ForeignKeySpecification
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -13,7 +14,12 @@ import kotlin.reflect.KProperty1
 class TableContext<T : Any>(
     private val kcls: KClass<T>,
     private val specification: List<TableSpecification<T>>,
-) {
+) : ForeignKeyContext {
+
+    override fun resolveLocalColumnName(kProperty1: KProperty1<*, *>): String {
+        return findColumnClause(kProperty1).resolveColumnName()
+    }
+
     fun resolveTableName(): String {
         val tablename = specification.filterIsInstance<TableName<T>>()
         return when (tablename.size) {
@@ -54,7 +60,10 @@ class TableContext<T : Any>(
         return keys.map { it.foreignKeySpecification }
             .map {
                 when (it) {
-                    is ForeignKeySpecification.ForeignKey<*, *, *> -> ForeignKeyClause(it as ForeignKeySpecification.ForeignKey<T, *, *>)
+                    is ForeignKeySpecification.ForeignKey<*, *, *> -> ForeignKeyClause(
+                        this,
+                        it as ForeignKeySpecification.ForeignKey<T, *, *>
+                    )
                 }
             }
     }

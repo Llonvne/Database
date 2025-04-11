@@ -3,6 +3,9 @@ package cn.llonvne.db
 import cn.llonvne.db.database.DatabaseSpecification.Companion.define
 import cn.llonvne.db.database.PostgresSpecification
 import cn.llonvne.db.foreignkey.ForeignKeySpecification
+import cn.llonvne.db.foreignkey.ForeignKeySpecification.CascadeOperationSpecification.Cascade
+import cn.llonvne.db.foreignkey.ForeignKeySpecification.CascadeSpecification.OnUpdate
+import cn.llonvne.db.registry.TableDefinitionRegistry
 import cn.llonvne.db.select.fields
 import cn.llonvne.db.select.from
 import cn.llonvne.db.select.select
@@ -31,6 +34,12 @@ fun main() {
 
     val postgresSpecification = PostgresSpecification()
 
+    val articleDefine = postgresSpecification.define<Article>(
+        TableName("tb_article"),
+        Article::content.varchar(20000, DefaultValue(""), Nullable(false)),
+        Article::ownerUserId.long(Nullable(false), UniqueConstraint())
+    )
+
     val userDefine = postgresSpecification.define<User>(
         TableName("tb-user"),
         EmptyConstructor {
@@ -40,20 +49,20 @@ fun main() {
             255,
             UniqueConstraint("12"),
             PrimaryKey(PrimaryKeyStrategy.Single),
-            Nullable(false),
+            NotNull(),
             DefaultValue("1")
         ),
         User::id.long(
             ColumnName("user_id"),
             DefaultValue(1)
         ),
-        TableSpecification.ForeignKey(ForeignKeySpecification.ForeignKey(User::id, Article::ownerUserId))
+        User::id.foreignKey(
+            articleDefine,
+            Article::ownerUserId,
+            OnUpdate(Cascade)
+        )
     )
 
-    val articleDefine = postgresSpecification.define<Article>(
-        Article::content.varchar(20000, DefaultValue(""), Nullable(false)),
-        Article::ownerUserId.long(Nullable(false), UniqueConstraint())
-    )
 
     println(
         postgresSpecification.select(
